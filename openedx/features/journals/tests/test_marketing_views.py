@@ -6,11 +6,13 @@ from nose.plugins.attrib import attr
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 
 from openedx.core.djangolib.testing.utils import CacheIsolationTestCase
 from openedx.core.djangoapps.site_configuration.tests.mixins import SiteMixin
 from openedx.features.journals.tests.utils import (get_mocked_journals,
                                                    get_mocked_journal_bundles,
+                                                   get_mocked_journal_access,
                                                    get_mocked_pricing_data,
                                                    override_switch)
 from openedx.features.journals.api import JOURNAL_INTEGRATION
