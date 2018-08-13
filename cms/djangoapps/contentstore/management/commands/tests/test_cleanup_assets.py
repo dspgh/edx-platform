@@ -2,6 +2,7 @@
 Test for assets cleanup of courses for Mac OS metadata files (with filename ".DS_Store"
 or with filename which starts with "._")
 """
+import os
 from django.core.management import call_command
 
 from opaque_keys.edx.keys import CourseKey
@@ -11,6 +12,8 @@ from xmodule.modulestore.django import modulestore
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.mongo.base import location_to_query
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
+from xmodule.modulestore.tests.utils import (add_temp_files_from_dict,
+    remove_temp_files_from_dict, DOT_FILES_DICT)
 from xmodule.modulestore.xml_importer import import_course_from_xml
 from django.conf import settings
 
@@ -21,6 +24,8 @@ class ExportAllCourses(ModuleStoreTestCase):
     """
     Tests assets cleanup for all courses.
     """
+    course_dir = TEST_DATA_DIR / "course_ignore"
+
     def setUp(self):
         """ Common setup. """
         super(ExportAllCourses, self).setUp()
@@ -29,22 +34,26 @@ class ExportAllCourses(ModuleStoreTestCase):
         # pylint: disable=protected-access
         self.module_store = modulestore()._get_modulestore_by_type(ModuleStoreEnum.Type.mongo)
 
+    def teardown_method(self, method):
+        remove_temp_files_from_dict(DOT_FILES_DICT.keys(), self.course_dir / "static")
+
     def test_export_all_courses(self):
         """
         This test validates that redundant Mac metadata files ('._example.txt', '.DS_Store') are
         cleaned up on import
         """
+        add_temp_files_from_dict(DOT_FILES_DICT, self.course_dir / "static")
         import_course_from_xml(
             self.module_store,
             '**replace_user**',
             TEST_DATA_DIR,
-            ['dot-underscore'],
+            ['course_ignore'],
             static_content_store=self.content_store,
             do_import_static=True,
             verbose=True
         )
 
-        course = self.module_store.get_course(CourseKey.from_string('/'.join(['edX', 'dot-underscore', '2014_Fall'])))
+        course = self.module_store.get_course(CourseKey.from_string('/'.join(['edX', 'course_ignore', '2014_Fall'])))
         self.assertIsNotNone(course)
 
         # check that there are two assets ['example.txt', '.example.txt'] in contentstore for imported course
